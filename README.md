@@ -1,0 +1,1071 @@
+# Nika Read Only
+
+- Say `No!` to officially endorsed cheating.
+  - Say `No!` to controller aim assist.
+
+- As of Season 23, for QEMU/KVM (formerly for Proton).
+
+```shell
++----------+    +----------+    +------------+    +--------------+
+| Linux PC | -> | QEMU/KVM | -> | Windows VM | -> | Apex Legends |
++----------+    +----------+    +------------+    +--------------+
+```
+
+## Introduction
+
+- The goal of this project is to have a working Linux cheat that can run alongside Apex Legends on my i5-6600K 4c/4t Linux PC.
+
+![Screenshot.jpg](Screenshot.jpg)
+
+## Popular games tested (patched QEMU/KVM + i5-6600K)
+
+* [x] Apex Legends (Easy Anti-Cheat)
+* [x] PUBG (BattlEye)
+* [x] Call of Duty: Black Ops 7 | Warzone S01 (RICOCHET Anti-Cheat + TPM 2.0 + Secure Boot)
+
+## Features
+
+* [x] 100% [VMAware](https://github.com/kernelwernel/VMAware) v2.6.0 undetected with AMD (host-passthrough) or Intel (select IvyBridge configuration)
+* [x] Stable CR3 shuffle for [Windows 10 20H1](https://archive.org/details/win-10-2004-english-x-64_202010) with [KB4598291](https://www.catalog.update.microsoft.com/Search.aspx?q=kb4598291)
+* [x] Overlay based ESP for players and items
+* [x] Press `5` / `6` / `7` / `8` / `9` / `0` to cycle LIGHT / ENERGY / SHOTGUN / HEAVY / SNIPER / GEAR items
+* [x] Press `BACKSPACE` to clear items
+* [x] Map radar
+* [x] Spectators list
+* [x] Humanized aimbot
+* [x] Inside FOV circle, hold RMB (Right Mouse Button) to aimbot **skynade** (even behind cover)
+* [x] Hold SHIFT to `triggerbot fire` or show ITEM / PLAYER names
+* [x] Toggle **gunfire aimbot** with CURSOR_LEFT; "**<**" symbol in the upper left corner of the screen
+* [x] Toggle **crosshair triggerbot** with CURSOR_UP; "**^**" symbol in the upper left corner of the screen
+* [x] Toggle **hitbox** with CURSOR_DOWN; `body` / `neck` / `head` / `none` text in the upper left corner of the screen
+* [x] Press F6 to dump **r5apex**, F7 to update **offsets**
+* [x] Press F9 twice to terminate cheat
+
+### 0. Disclaimer
+
+- If you skip any detail, enjoy your ban.
+
+### 1a. Standard dual GPU: iGPU (for Linux) + dGPU (for Windows)
+
+- Note for Fedora 44 KDE (or XFCE) set up:
+  - Install Fedora 44 KDE (or XFCE) from: [`Fedora website`](https://dl.fedoraproject.org/pub/fedora/linux/releases/44/KDE/x86_64/iso/).
+  - Disconnect from Internet before installing and avoid updating after.
+  - Disconnect cable from dGPU before installing.
+  - Without this your taskbar is assigned to your dGPU, which should never happen.
+  - Dolphin >> F10 >> Configure >> Configure Dolphin... >> Previews >> _uncheck_ [ ] Folders >> [Apply]
+
+### 1b. Alternative single GPU: VNC (for Linux) + dGPU (for Windows)
+
+- You can use VNC if you don't have iGPU:
+  - Install Fedora 44 XFCE from: [`Fedora website`](https://dl.fedoraproject.org/pub/fedora/linux/releases/44/Spins/x86_64/iso/).
+  - Disconnect from Internet before installing and avoid updating after.
+
+- Install headless VNC and switch to terminal mode:
+```shell
+sudo dnf install xorg-x11-drv-dummy x11vnc mingetty
+sudo firewall-cmd --permanent --add-service=vnc-server
+sudo systemctl set-default multi-user.target
+```
+
+- Download `dummy.conf` / `headless.sh` / `autologin.sh` to **~/Downloads** and install:
+```shell
+cd ~/Downloads
+sudo cp dummy.conf /etc/X11/.
+#sudo cp headless.sh /etc/profile.d/.
+chmod +x autologin.sh
+./autologin.sh
+```
+
+- WiFi from command line:
+```shell
+nmcli radio wifi on
+nmcli device wifi connect <SSID> --ask
+```
+
+- Take note of **host local IP** for VNC connection:
+```shell
+ip addr
+```
+
+- Restart from command line:
+```shell
+sudo reboot now
+```
+
+- Start X on local hardware (for VM with virtual VGA):
+```shell
+startxfce4
+```
+
+- Start X over headless VNC (for VM with passthrough GPU):
+```shell
+cd ~/Downloads
+chmod +x headless.sh
+./headless.sh
+```
+
+- Use VNC from smartphone, tablet, or laptop to connect.
+
+### 1.1. Install hardware decoder prior to libvirt and Steam (not required, Steam removed)
+
+
+<details>
+  <summary>Hardware decoder with <b>Intel Skylake</b> and newer:</summary>
+
+    sudo dnf install https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+    sudo dnf install intel-media-driver
+</details>
+
+
+<details>
+  <summary>Hardware decoder with <b>AMD</b>:</summary>
+
+    sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+    sudo dnf swap mesa-va-drivers mesa-va-drivers-freeworld --allowerasing
+</details>
+
+- If your screen goes black, press `Ctrl+Alt+F3` and use your login:
+  - KDE: sudo systemctl enable plasmalogin && sudo systemctl start plasmalogin
+  - XFCE: sudo systemctl enable lightdm && sudo systemctl start lightdm
+
+
+<details>
+  <summary>Hardware decoder with <b>Nvidia</b>:</summary>
+
+    sudo dnf install libva-nvidia-driver
+</details>
+
+
+<details>
+  <summary>Hardware decoder with <b>Firefox</b>:</summary>
+
+    sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+    sudo dnf install ffmpeg --allowerasing
+</details>
+
+### 1.2. Configure libvirt
+
+
+  <details>
+    <summary>Install on <b>Fedora Linux</b>:</summary>
+
+    sudo dnf install @virtualization
+  </details>
+
+
+  <details>
+    <summary>Install on <b>Debian Linux</b>:</summary>
+
+    sudo apt update
+    sudo apt install virt-manager
+  </details>
+
+- Edit `/etc/libvirt/qemu.conf` and uncomment (needed for **audio**):
+```shell
+#user = "libvirt-qemu"
+user = "1000"
+```
+
+- Edit `/etc/libvirt/libvirtd.conf` and uncomment:
+```shell
+unix_sock_group = "libvirt"
+unix_sock_rw_perms = "0770"
+```
+
+- Join **libvirt group** and enable **libvirt daemon**:
+```shell
+test $UID = 0 && exit
+sudo usermod -aG libvirt $USER
+sudo systemctl enable libvirtd.service
+```
+
+
+  <details>
+    <summary>Permanently disable `SELinux` on <b>Fedora Linux</b>:</summary>
+
+    sudo nano /etc/selinux/config
+
+    #SELINUX=enforcing
+    SELINUX=disabled
+  </details>
+
+
+  <details>
+    <summary>Permanently disable `AppArmor` on <b>Debian Linux</b>:</summary>
+
+    sudo systemctl stop apparmor
+    sudo systemctl disable apparmor
+  </details>
+
+- Restart Linux PC.
+
+- Virtual Machine Manager >> Edit >> Preferences >> General >> _check_ [x] Enable XML editing >> [Close]
+
+- Virtual Machine Manager >> Edit >> Preferences >> New VM >> Storage format: Raw >> [Close]
+
+- Edit `default` virtual network:
+```shell
+sudo -E virsh net-edit default
+
+<network>
+  <name>default</name>
+  <uuid>01234567-89ab-cdef-0123-456789abcdef</uuid>
+  <forward mode='nat'/>
+  <bridge name='virbr0' stp='on' delay='0'/>
+  <mac address='XX:XX:XX:XX:XX:XX'/>
+  <ip address='192.168.xxx.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.xxx.2' end='192.168.xxx.254'/>
+    </dhcp>
+  </ip>
+</network>
+```
+
+- Restart `default` virtual network:
+```shell
+sudo virsh net-destroy default
+sudo virsh net-start default
+sudo virsh net-autostart default
+```
+
+### 1.3. Spoof QEMU (mandatory)
+
+- Based on: [Scrut1ny/Hypervisor-Phantom](https://github.com/Scrut1ny/Hypervisor-Phantom).
+
+
+  <details>
+    <summary>Build on <b>Fedora 44</b>:</summary>
+
+  ```shell
+  sudo dnf install acpica-tools bzip2-devel gcc git glib2-devel libfdt-devel libusb1-devel libuuid-devel ninja-build pipewire-devel pixman-devel SDL2_image-devel spice-server-devel usbredir-devel zlib-ng-compat-devel
+  ```
+  </details>
+
+
+  <details>
+    <summary>Build on <b>Debian 13</b>:</summary>
+
+  ```shell
+  sudo apt install acpica-tools
+  sudo apt build-dep qemu
+  ```
+  </details>
+
+- Edit `qemupatch.sh`, use your own `lspci -nn` data:
+```shell
+lspci -nn
+
+00:1f.0 ISA bridge [0601]: Intel Corporation Tiger Lake-LP LPC Controller [8086:a082] (rev 20)
+00:1f.4 SMBus [0c05]: Intel Corporation Tiger Lake-LP SMBus Controller [8086:a0a3] (rev 20)
+00:1f.3 Multimedia audio controller [0401]: Intel Corporation Tiger Lake-LP Smart Sound Technology Audio Controller [8086:a0c8] (rev 20)
+02:00.0 Non-Volatile memory controller [0108]: Intel Corporation SSD 660P Series [8086:f1a8] (rev 03)
+00:1c.0 PCI bridge [0604]: Intel Corporation Tiger Lake-LP PCI Express Root Port #8 [8086:a0bf] (rev 20)
+00:14.0 USB controller [0c03]: Intel Corporation Tiger Lake-LP USB 3.2 Gen 2x1 xHCI Host Controller [8086:a0ed] (rev 20)
+00:00.0 Host bridge [0600]: Intel Corporation Tiger Lake-UP3/H35 4 cores Host Bridge/DRAM Registers [8086:9a14] (rev 01)
+00:14.2 RAM memory [0500]: Intel Corporation Tiger Lake-LP Shared SRAM [8086:a0ef] (rev 20)
+
+
+lpc_8086="a082"         # Tiger Lake-LP LPC Controller
+smbus_8086="a0a3"       # Tiger Lake-LP SMBus Controller
+hdaudio_8086="a0c8"     # Tiger Lake-LP Smart Sound Technology Audio Controller
+hdaname_8086="Tiger Lake-LP Smart Sound Technology Audio Controller"
+sata_8086="f1a8"        # SSD 660P Series
+#rootport_8086="a0bf"    # Tiger Lake-LP PCI Express Root Port #8
+rootport_8086="a0b8"    # 8-7=1, a0bf-7=a0b8, Tiger Lake-LP PCI Express Root Port #1
+xhci_8086="a0ed"        # Tiger Lake-LP USB 3.2 Gen 2x1 xHCI Host Controller
+hostbridge_8086="9a14"  # 11th Gen Core Processor Host Bridge/DRAM Registers
+pcibridge_8086="a0ef"   # Tiger Lake-LP Shared SRAM
+```
+
+- Run `qemupatch.sh` to clone, patch, and build QEMU with generated data.
+
+### 1.4. Spoof OVMF (mandatory)
+
+- Based on: [Scrut1ny/Hypervisor-Phantom](https://github.com/Scrut1ny/Hypervisor-Phantom).
+
+
+  <details>
+    <summary>Build on <b>Fedora Linux</b>:</summary>
+
+  ```shell
+  sudo dnf install g++ nasm python3-virt-firmware
+  ```
+  </details>
+
+
+  <details>
+    <summary>Build on <b>Debian Linux</b>:</summary>
+
+  ```shell
+  sudo apt install g++ nasm python3-virt-firmware
+  ```
+  </details>
+
+- Run `ovmfpatch.sh` to clone, patch, and build OVMF with generated data.
+
+### 1.5. Build custom Linux kernel (mandatory)
+
+
+  <details>
+    <summary>Build on <b>Fedora Linux</b>:</summary>
+
+  ```shell
+  sudo dnf install util-linux-script
+  ```
+  </details>
+
+- Run `kernelpatch.sh` to clone, patch, and build custom Linux kernel.
+
+- Install `kernel-6.19.14_tkg_eevdf+-1.x86_64`:
+```shell
+cd "linux-tkg/RPMs"
+sudo dnf install kernel-6.19.14_tkg_eevdf+-1.x86_64.rpm
+```
+
+- Edit `/etc/default/grub`, add **mitigations=auto**:
+```shell
+GRUB_CMDLINE_LINUX="mitigations=auto ..."
+```
+
+- Update GRUB and restart Linux PC:
+```shell
+<Fedora> sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+<Debian> sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+### 2. New VM set up in QEMU/KVM
+
+- Virtual Machine Manager >> File >> New Virtual Machine
+
+- Manual install >> `win10` >> Choose Memory and CPU settings >> _uncheck_ [ ] Enable storage for this virtual machine >> _check_ [x] Customize configuration before install >> [Finish]
+  - Overview >> Chipset: Q35, **Firmware**: OVMF_CODE_4M.patched >> [Apply]
+  - NIC :xx:xx:xx >> Device model: rtl8125 >> **(type it in)** >> MAC address: YOUR_MAC_HERE >> [Apply]
+  - Video QXL >> Model: VGA >> [Apply]
+  - [Add Hardware] >> Storage >> Select or create custom storage >> [Manage...] >> [+] >> `win10`.img >> Capacity: 240 GiB >> [Finish] >> [Cancel] >> [Cancel]
+  - [Begin Installation] >> Virtual Machine >> Shut Down >> Force Off
+
+### 2.1. Configure VM
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> Overview >> XML
+
+
+- Replace `<domain type="kvm">` and [Apply]:
+  <details>
+    <summary>Spoiler</summary>
+
+  ```shell
+  <domain type="kvm" xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0">
+    <qemu:commandline>
+      <qemu:arg value="-device"/>
+      <qemu:arg value="ahci,id=device-sata1,addr=07.0"/>
+      <qemu:arg value="-drive"/>
+      <qemu:arg value="file=/var/lib/libvirt/images/win10.img,format=raw,cache=none,discard=ignore,if=none,id=drive-sata1-0"/>
+      <qemu:arg value="-device"/>
+      <qemu:arg value="ide-hd,bus=device-sata1.0,drive=drive-sata1-0,id=sata1-0,rotation_rate=1,serial=YOUR_SERIAL_HERE"/>
+    </qemu:commandline>
+  ```
+  </details>
+
+- Set file permissions:
+```shell
+sudo chmod 777 /var/lib/libvirt/images/win10.img
+```
+
+
+- Replace `</qemu:commandline>` and [Apply]:
+  <details>
+    <summary>Spoiler <b>(do NOT use this example, instead modify it with fake SMBIOS data; sudo dmidecode)</b></summary>
+
+  ```shell
+      <qemu:arg value="-smbios"/>
+      <qemu:arg value="type=1,manufacturer=Gigabyte Technology Co.,, Ltd.,product=HP Laptop 14s-fq2xxx,version=23.41,serial=D3E4F56789"/>
+      <qemu:arg value="-smbios"/>
+      <qemu:arg value="type=2,manufacturer=Gigabyte Technology Co.,, Ltd.,product=89FE,version=34.12,serial=B1C2D3E4F56789"/>
+      <qemu:arg value="-smbios"/>
+      <qemu:arg value="type=3,manufacturer=Gigabyte Technology Co.,, Ltd.,version=23.41,serial=D3E4F56789"/>
+      <qemu:arg value="-smbios"/>
+      <qemu:arg value="type=4,sock_pfx=U3E1,manufacturer=Advanced Micro Devices,, Inc.,version=AMD Ryzen 5 5625U 6-Core Processor,max-speed=4300,current-speed=2300"/>
+      <qemu:arg value="-smbios"/>
+      <qemu:arg value="type=17,manufacturer=Samsung,part=M471A5244CB0-CWE,speed=3200,serial=D3E4F5"/>
+      <qemu:arg value="-smbios"/>
+      <qemu:arg value="type=8,internal_reference=J1A1,external_reference=Keyboard,connector_type=0x0F,port_type=0x0D"/>
+      <qemu:arg value="-smbios"/>
+      <qemu:arg value="type=8,internal_reference=J1A1,external_reference=Mouse,connector_type=0x0F,port_type=0x0E"/>
+      <qemu:arg value="-smbios"/>
+      <qemu:arg value="type=9,slot_designation=J6C1,slot_type=0xAA,slot_data_bus_width=0x0D,current_usage=0x04,slot_length=0x04,slot_id=0x01,slot_characteristics1=0x04,slot_characteristics2=0x03"/>
+    </qemu:commandline>
+  ```
+  </details>
+
+
+- Replace from `<memory unit="KiB">4194304</memory>` to `<vcpu placement="static">2</vcpu>` and [Apply]:
+  <details>
+    <summary>Spoiler <b>(use a commercial memory size like 8, 16, or 24 GiB; vcpu example for 8 threads host CPU)</b></summary>
+
+  ```shell
+  <memory unit="GiB">24</memory>
+  <currentMemory unit="GiB">24</currentMemory>
+  <vcpu placement="static">8</vcpu>
+  ```
+  </details>
+
+
+- Replace from `<features>` to `</clock>` and [Apply]:
+  <details>
+    <summary>Spoiler (example for 4 cores 8 threads host CPU)</summary>
+
+  ```shell
+  <features>
+    <acpi/>
+    <apic/>
+    <hyperv mode="custom">
+      <relaxed state="off"/>
+      <vapic state="off"/>
+      <spinlocks state="off"/>
+      <vpindex state="off"/>
+      <runtime state="off"/>
+      <synic state="off"/>
+      <stimer state="off"/>
+      <reset state="off"/>
+      <vendor_id state="off"/>
+      <frequencies state="off"/>
+      <reenlightenment state="off"/>
+      <tlbflush state="off"/>
+      <ipi state="off"/>
+      <evmcs state="off"/>
+      <avic state="off"/>
+    </hyperv>
+    <kvm>
+      <hidden state="on"/>
+    </kvm>
+    <ioapic driver="kvm"/>
+    <msrs unknown="fault"/>
+    <pmu state="on"/>
+    <smm state="on"/>
+    <vmport state="off"/>
+    <ps2 state="on"/>
+  </features>
+  <cpu mode="host-passthrough" check="none" migratable="off">
+    <topology sockets="1" cores="4" threads="2"/>
+    <cache mode="passthrough"/>
+    <feature policy="disable" name="hypervisor"/>
+    <feature policy="require" name="svm"/>
+    <feature policy="require" name="vmx"/>
+    <feature policy="require" name="x2apic"/>
+    <feature policy="require" name="topoext"/>
+    <feature policy="require" name="spec-ctrl"/>
+    <feature policy="require" name="stibp"/>
+    <feature policy="require" name="ssbd"/>
+  </cpu>
+  <clock offset="localtime">
+    <timer name="tsc" present="yes" tickpolicy="discard" mode="native"/>
+    <timer name="hpet" present="yes"/>
+    <timer name="rtc" present="yes"/>
+    <timer name="pit" present="yes"/>
+    <timer name="kvmclock" present="no"/>
+    <timer name="hypervclock" present="no"/>
+  </clock>
+  ```
+  </details>
+
+
+- Replace from `<memballoon model="virtio">` to `</memballoon>` and [Apply]:
+  <details>
+    <summary>Spoiler</summary>
+
+  ```shell
+  <memballoon model="none"/>
+  ```
+  </details>
+
+
+- Replace `<audio id="1" type="spice"/>` and [Apply]:
+  <details>
+    <summary>Spoiler <b>(for pipewire sound, not required)</b></summary>
+
+  ```shell
+  <audio id="1" type="pipewire" runtimeDir="/run/user/1000">
+    <input name="qemuinput"/>
+    <output name="qemuoutput"/>
+  </audio>
+  ```
+  </details>
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> Tablet >> [Remove]
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> Serial 1 >> [Remove]
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> Channel (spice) >> [Remove]
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> Controller VirtIO Serial 0 >> [Remove]
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> Overview >> XML
+
+
+- Replace from `<pm>` to `</emulator>` and [Apply]:
+  <details>
+    <summary>Spoiler</summary>
+
+  ```shell
+  <pm>
+    <suspend-to-mem enabled="yes"/>
+    <suspend-to-disk enabled="no"/>
+  </pm>
+  <devices>
+    <emulator>/usr/local/bin/qemu-system-x86_64</emulator>
+  ```
+  </details>
+
+
+- Replace `</qemu:commandline>` and [Apply]:
+  <details>
+    <summary>Spoiler</summary>
+
+  ```shell
+    <qemu:arg value="-acpitable"/>
+    <qemu:arg value="file=/usr/local/bin/ssdt1.aml"/>
+    <qemu:arg value="-acpitable"/>
+    <qemu:arg value="file=/usr/local/bin/ssdt2.aml"/>
+  </qemu:commandline>
+  ```
+  </details>
+
+- Make sure that `pc-q35-11.0` is specified in your XML:
+```shell
+<type arch="x86_64" machine="pc-q35-11.0">hvm</type>
+```
+
+- Pin `vcpu` to `cpuset`, example for 4 cores 8 threads (dies=1) host CPU:
+```shell
+  paste <(grep "initial apicid" /proc/cpuinfo) <(grep "processor" /proc/cpuinfo)
+
+  initial apicid  : 0     processor       : 0
+  initial apicid  : 2     processor       : 1
+  initial apicid  : 4     processor       : 2
+  initial apicid  : 6     processor       : 3
+  initial apicid  : 1     processor       : 4
+  initial apicid  : 3     processor       : 5
+  initial apicid  : 5     processor       : 6
+  initial apicid  : 7     processor       : 7
+```
+
+```shell
+  <vcpu placement="static">8</vcpu>
+  <cputune>
+    <vcpupin vcpu="0" cpuset="0"/>
+    <vcpupin vcpu="2" cpuset="1"/>
+    <vcpupin vcpu="4" cpuset="2"/>
+    <vcpupin vcpu="6" cpuset="3"/>
+    <vcpupin vcpu="1" cpuset="4"/>
+    <vcpupin vcpu="3" cpuset="5"/>
+    <vcpupin vcpu="5" cpuset="6"/>
+    <vcpupin vcpu="7" cpuset="7"/>
+  </cputune>
+  <cpu mode="host-passthrough" check="none" migratable="off">
+    <topology sockets="1" clusters="1" dies="1" cores="4" threads="2"/>
+    ...
+  </cpu>
+```
+
+- Pin `vcpu` to `cpuset`, example for 12 cores 24 threads (dies=2) host CPU with **SMT Control Disabled** in host BIOS:
+```shell
+  <vcpu placement="static">12</vcpu>
+  <cputune>
+    <vcpupin vcpu="0" cpuset="0"/>
+    <vcpupin vcpu="1" cpuset="1"/>
+    <vcpupin vcpu="2" cpuset="2"/>
+    <vcpupin vcpu="3" cpuset="3"/>
+    <vcpupin vcpu="4" cpuset="4"/>
+    <vcpupin vcpu="5" cpuset="5"/>
+    <vcpupin vcpu="6" cpuset="6"/>
+    <vcpupin vcpu="7" cpuset="7"/>
+    <vcpupin vcpu="8" cpuset="8"/>
+    <vcpupin vcpu="9" cpuset="9"/>
+    <vcpupin vcpu="10" cpuset="10"/>
+    <vcpupin vcpu="11" cpuset="11"/>
+  </cputune>
+  <cpu mode="host-passthrough" check="none" migratable="off">
+    <topology sockets="1" clusters="1" dies="2" cores="6" threads="1"/>
+    ...
+  </cpu>
+```
+
+### 2.2. Remove excess PCI
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> Overview >> XML
+
+- Remove:
+```shell
+    <controller type="pci" index="5" model="pcie-root-port">
+      <model name="pcie-root-port"/>
+      <target chassis="5" port="0x14"/>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x02" function="0x4"/>
+    </controller>
+    <controller type="pci" index="6" model="pcie-root-port">
+      <model name="pcie-root-port"/>
+      <target chassis="6" port="0x15"/>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x02" function="0x5"/>
+    </controller>
+    <controller type="pci" index="7" model="pcie-root-port">
+      <model name="pcie-root-port"/>
+      <target chassis="7" port="0x16"/>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x02" function="0x6"/>
+    </controller>
+    <controller type="pci" index="8" model="pcie-root-port">
+      <model name="pcie-root-port"/>
+      <target chassis="8" port="0x17"/>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x02" function="0x7"/>
+    </controller>
+    <controller type="pci" index="9" model="pcie-root-port">
+      <model name="pcie-root-port"/>
+      <target chassis="9" port="0x18"/>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x03" function="0x0" multifunction="on"/>
+    </controller>
+    <controller type="pci" index="10" model="pcie-root-port">
+      <model name="pcie-root-port"/>
+      <target chassis="10" port="0x19"/>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x03" function="0x1"/>
+    </controller>
+    <controller type="pci" index="11" model="pcie-root-port">
+      <model name="pcie-root-port"/>
+      <target chassis="11" port="0x1a"/>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x03" function="0x2"/>
+    </controller>
+    <controller type="pci" index="12" model="pcie-root-port">
+      <model name="pcie-root-port"/>
+      <target chassis="12" port="0x1b"/>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x03" function="0x3"/>
+    </controller>
+    <controller type="pci" index="13" model="pcie-root-port">
+      <model name="pcie-root-port"/>
+      <target chassis="13" port="0x1c"/>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x03" function="0x4"/>
+    </controller>
+    <controller type="pci" index="14" model="pcie-root-port">
+      <model name="pcie-root-port"/>
+      <target chassis="14" port="0x1d"/>
+      <address type="pci" domain="0x0000" bus="0x00" slot="0x03" function="0x5"/>
+    </controller>
+```
+
+### 3. Environment set up in Linux
+
+- Enter BIOS and enable Virtualization Technology:
+  - Enable VT-d for Intel (VMX).
+  - Enable AMD-Vi for AMD (SVM).
+  - Enable "IOMMU".
+  - Disable "Above 4G Decoding".
+
+- Nested Virtualization for Intel:
+```shell
+sudo su
+echo "options kvm_intel nested=1" > /etc/modprobe.d/kvm.conf
+echo "options kvm ignore_msrs=0" >> /etc/modprobe.d/kvm.conf
+```
+
+- Nested Virtualization for AMD:
+```shell
+sudo su
+echo "options kvm_amd nested=1" > /etc/modprobe.d/kvm.conf
+echo "options kvm ignore_msrs=0" >> /etc/modprobe.d/kvm.conf
+```
+
+- Preload `vfio-pci` module so it can bind to PCI IDs:
+```shell
+sudo su
+echo "softdep radeon pre: vfio-pci" >> /etc/modprobe.d/kvm.conf
+echo "softdep amdgpu pre: vfio-pci" >> /etc/modprobe.d/kvm.conf
+echo "softdep nouveau pre: vfio-pci" >> /etc/modprobe.d/kvm.conf
+echo "softdep nvidia pre: vfio-pci" >> /etc/modprobe.d/kvm.conf
+```
+
+- Update initramfs:
+```shell
+<Fedora> sudo dracut -f
+<Debian> sudo update-initramfs -c -k $(uname -r)
+```
+
+### 3.1. VFIO GPU passthrough (on Linux PC)
+
+- Find GPU location with: `lspci -v | grep -i VGA`
+```shell
+00:02.0 VGA compatible controller: Intel Corporation HD Graphics 530 (rev 06) (prog-if 00 [VGA controller])
+02:00.0 VGA compatible controller: NVIDIA Corporation TU106 [GeForce RTX 2070] (rev a1) (prog-if 00 [VGA controller])
+```
+
+- GeForce RTX 2070 has 4 PCI IDs: `lspci -v | grep -i NVIDIA`
+```shell
+02:00.0 VGA compatible controller: NVIDIA Corporation TU106 [GeForce RTX 2070] (rev a1) (prog-if 00 [VGA controller])
+        Subsystem: NVIDIA Corporation TU106 [GeForce RTX 2070]
+02:00.1 Audio device: NVIDIA Corporation TU106 High Definition Audio Controller (rev a1)
+        Subsystem: NVIDIA Corporation Device 1f02
+02:00.2 USB controller: NVIDIA Corporation TU106 USB 3.1 Host Controller (rev a1) (prog-if 30 [XHCI])
+        Subsystem: NVIDIA Corporation Device 1f02
+02:00.3 Serial bus controller: NVIDIA Corporation TU106 USB Type-C UCSI Controller (rev a1)
+        Subsystem: NVIDIA Corporation Device 1f02
+```
+
+- Find PCI IDs with: `lspci -n -s 02:00`
+```shell
+02:00.0 0300: 10de:1f02 (rev a1)
+02:00.1 0403: 10de:10f9 (rev a1)
+02:00.2 0c03: 10de:1ada (rev a1)
+02:00.3 0c80: 10de:1adb (rev a1)
+```
+
+- Edit `/etc/default/grub`, use either **intel_iommu=on** or **amd_iommu=on**:
+```shell
+GRUB_CMDLINE_LINUX="nofb vfio-pci.ids=10de:1f02,10de:10f9,10de:1ada,10de:1adb split_lock_detect=off intel_iommu=on iommu=pt"
+```
+
+- For single GPU `vfio-pci.ids` is actually not required as the host is in terminal mode.
+  - You can switch TTY with `CTRL+ALT+F2` / `CTRL+ALT+F3` / `...` while the VM is not running.
+
+- Update GRUB and restart Linux PC:
+```shell
+<Fedora> sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+<Debian> sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+- Inspect kernel driver in use with: `lspci -k -s 02:00`
+```lua
+02:00.0 VGA compatible controller: NVIDIA Corporation TU106 [GeForce RTX 2070] (rev a1)
+        Subsystem: NVIDIA Corporation TU106 [GeForce RTX 2070]
+        Kernel driver in use: vfio-pci
+        Kernel modules: nouveau
+02:00.1 Audio device: NVIDIA Corporation TU106 High Definition Audio Controller (rev a1)
+        Subsystem: NVIDIA Corporation Device 1f02
+        Kernel driver in use: vfio-pci
+        Kernel modules: snd_hda_intel
+02:00.2 USB controller: NVIDIA Corporation TU106 USB 3.1 Host Controller (rev a1)
+        Subsystem: NVIDIA Corporation Device 1f02
+        Kernel driver in use: xhci_hcd
+02:00.3 Serial bus controller: NVIDIA Corporation TU106 USB Type-C UCSI Controller (rev a1)
+        Subsystem: NVIDIA Corporation Device 1f02
+        Kernel driver in use: vfio-pci
+        Kernel modules: i2c_nvidia_gpu
+```
+
+- Not loaded as a module, `xhci_hcd` will be managed by libvirt.
+
+### 3.2. Add passthrough GPU devices to Windows VM
+
+- Start VM and install Windows.
+  - For single GPU switch to VNC after Windows install.
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> [Add Hardware] >> PCI Host Device:
+  - 02:00.0 NVIDIA Corporation TU106 [GeForce RTX 2070] >> **[Finish]**
+  - 02:00.1 NVIDIA Corporation TU106 High Definition Audio Controller >> **[Finish]**
+  - 02:00.2 NVIDIA Corporation TU106 USB 3.1 Host Controller >> **[Finish]**
+  - 02:00.3 NVIDIA Corporation TU106 USB Type-C UCSI Controller >> **[Finish]**
+
+- Install GPU drivers on Windows VM.
+
+- Set `shader cache size` to **10 GiB** with `Nvidia Control Panel`.
+
+### 4. Configure evdev passthrough (on Linux PC)
+
+- Find your **mouse** and **keyboard** with:
+```shell
+ls -l /dev/input/by-id/
+
+usb-COMPANY_USB_Device-event-if02 -> ../event7
+usb-COMPANY_USB_Device-event-kbd -> ../event4
+usb-COMPANY_USB_Device-if01-event-mouse -> ../event5
+usb-COMPANY_USB_Device-if01-mouse -> ../mouse0
+usb-COMPANY_USB_Device-if02-event-kbd -> ../event6
+usb-SONiX_USB_DEVICE-event-if01 -> ../event9
+usb-SONiX_USB_DEVICE-event-kbd -> ../event8
+```
+
+- By symlink `../mouse0` you find that `usb-COMPANY_USB_Device` is your **mouse**.
+
+- You are looking for `event-mouse` and `event-kbd`:
+  - `usb-COMPANY_USB_Device-if01-event-mouse -> ../event5` is your **mouse**.
+  - `usb-SONiX_USB_DEVICE-event-kbd -> ../event8` is your **keyboard**.
+
+- Edit `/etc/libvirt/qemu.conf` and uncomment:
+```shell
+cgroup_device_acl = [
+        "/dev/null", "/dev/full", "/dev/zero",
+        "/dev/random", "/dev/urandom",
+        "/dev/ptmx", "/dev/kvm", "/dev/kqemu",
+        "/dev/rtc", "/dev/hpet",
+        "/dev/input/by-id/usb-COMPANY_USB_Device-if01-event-mouse",
+        "/dev/input/by-id/usb-SONiX_USB_DEVICE-event-kbd",
+        "/dev/input/event0",
+        "/dev/input/event1",
+        "/dev/input/event2",
+        "/dev/input/event3",
+        "/dev/input/event4",
+        "/dev/input/event5",
+        "/dev/input/event6",
+        "/dev/input/event7",
+        "/dev/input/event8",
+        "/dev/input/event9",
+        "/dev/kvmfr0",
+        "/dev/userfaultfd"
+]
+```
+
+- Include `cgroup_device_acl` as above, replacing `event-kbd`, `event-mouse`, and the path to each symlink `/dev/input/eventX`.
+
+- Restart libvirtd:
+```shell
+sudo systemctl restart libvirtd
+```
+
+- Toggle input with LEFT_CTRL + RIGHT_CTRL when needed.
+
+### 4.1. Configure VM
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> Overview >> XML
+
+
+- Replace `</qemu:commandline>` and [Apply]:
+  <details>
+    <summary>Spoiler</summary>
+
+  ```shell
+    <qemu:arg value="-object"/>
+    <qemu:arg value="input-linux,id=kbd1,evdev=/dev/input/by-id/usb-SONiX_USB_DEVICE-event-kbd,grab_all=on,repeat=on"/>
+    <qemu:arg value="-object"/>
+    <qemu:arg value="input-linux,id=mouse1,evdev=/dev/input/by-id/usb-COMPANY_USB_Device-if01-event-mouse"/>
+  </qemu:commandline>
+  ```
+  </details>
+
+- Join **input group**:
+```shell
+test $UID = 0 && exit
+sudo usermod -aG input $USER
+```
+
+- Restart Linux PC.
+
+### 5. Usage
+
+- For **KDE window settings**:
+  - System Settings >> Window Management >> Window Rules >> Import... >> GLFW.kwinrule
+  - Also check; System Settings >> Display & Monitor >> Scale: 100%
+
+- For **XFCE taskbar settings**:
+  - Bottom taskbar >> Right-click >> Panel >> Panel Preferences... >> _click_ [-] Remove the currently selected panel >> [Remove] >> [Close]
+  - Top taskbar >> Right-click >> Panel >> Panel Preferences... >> Automatically hide the panel: Always >> [Close]
+  - Top taskbar >> Applications >> Settings >> Settings Manager >> Window Manager Tweaks >> Accessibility >> _check_ [x] Hide title of windows when maximized >> [Close]
+
+- For **MATE taskbar settings**:
+  - Top taskbar >> Right-click >> Add to Panel... >> Window List >> [Add] >> [Close]
+  - Bottom taskbar >> Delete This Panel
+  - Top taskbar >> Properties >> Orientation: Bottom >> _check_ [x] Show hide buttons >> [Close]
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> Video VGA >> Model: None >> [Apply]
+
+- You will be using video output from passthrough GPU instead of VGA virtual GPU.
+
+| Method                       | Latency   | ESP          | Cons                         |
+| ---------------------------- | --------- | ------------ | ---------------------------- |
+| Cable                        | 0 ms      | Glow         | Overlay on 2nd monitor       |
+| Capture card                 | 30-300 ms | Overlay+Glow | Investment for faster device |
+
+### 5.1. Cable
+
+- Plug monitor into passthrough GPU.
+
+### 5.2. Capture card
+
+
+  <details>
+    <summary>Install `gstreamer1.0-tools` on <b>Debian Linux</b>:</summary>
+
+    sudo apt install gstreamer1.0-tools
+  </details>
+
+- Plug capture card into passthrough GPU.
+
+- Open capture card raw feed with:
+```shell
+gst-launch-1.0 -v v4l2src device=/dev/video0 ! video/x-raw,width=1920,height=1080,framerate=60/1 ! videoconvert ! autovideosink
+```
+
+### 6. Nika Read Only (on Linux PC)
+
+- Install:
+```shell
+cd path/to/extracted/repository
+chmod +x nika
+```
+
+- Run:
+```shell
+cd path/to/extracted/repository
+sudo -E ./nika
+```
+
+### 7. Replace network (mandatory)
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> USB Redirector 2 >> [Remove]
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> USB Redirector 1 >> [Remove]
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> Controller USB 0 >> Model: none >> **(type it in)** >> [Apply]
+
+### 7.1a. rtl8125
+
+- Credit to: [HazedHV/AutoVirt](https://github.com/HazedHV/AutoVirt).
+
+### 7.1b. USB
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> [Add Hardware] >> PCI Host Device:
+  - USB 3.x xHCI Host Controller >> **[Finish]**
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> NIC :xx:xx:xx >> [Remove]
+
+- Start VM.
+
+- Device Manager >> View >> Show hidden devices >> Intel(R) 82574L Gigabit Network Connection >> Uninstall device
+
+- Plug an USB Network Interface Card into USB 3.x xHCI Host Controller port.
+
+### 7.1c. virtio
+
+- Download `virtio-win.iso` from: [`fedorapeople.org`](https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/latest-virtio/virtio-win.iso).
+
+
+- Replace `</qemu:commandline>` and [Apply]:
+  <details>
+    <summary>Spoiler</summary>
+
+  ```shell
+    <qemu:arg value="-drive"/>
+    <qemu:arg value="file=/home/fedora/Downloads/virtio-win.iso,format=raw,read-only=on,if=none,id=drive-sata1-1"/>
+    <qemu:arg value="-device"/>
+    <qemu:arg value="ide-cd,bus=device-sata1.1,drive=drive-sata1-1,id=sata1-1"/>
+  </qemu:commandline>
+  ```
+  </details>
+
+- Delete `vars.sh`, run `qemupatch.sh` and `ovmfpatch.sh`.
+
+- Download `virtio.cmd` to `network` folder in Desktop (on Windows VM).
+
+- Run `virtio.cmd`, it will copy necessary files from CDROM device.
+
+- Stop VM.
+
+- Virtual Machine Manager >> [Open] >> View >> Details >> NIC :xx:xx:xx >> Device model: virtio >> [Apply]
+
+- Start VM.
+
+- Device Manager >> View >> Show hidden devices >> Intel(R) 82574L Gigabit Network Connection >> Uninstall device
+
+- Install virtio ethernet from `network` folder (use Device Manager).
+
+- Open an `Administrator Command Prompt`, disable `testsigning`, then restart:
+```shell
+bcdedit /set testsigning off
+```
+
+### 7.2. memflow-kvm (not required, install if memflow-win32 error)
+
+- Boot `kernel-6.19.14_tkg_eevdf+-1.x86_64`.
+
+- Install `dkms`:
+```shell
+cd "linux-tkg/RPMs"
+sudo dnf install kernel-devel-6.19.14_tkg_eevdf+-1.x86_64.rpm
+sudo dnf download dkms
+sudo rpm -i --nodeps dkms-3.4.3-2.fc44.noarch.rpm
+sudo wget https://github.com/memflow/memflow-kvm/releases/download/bin-kernel-6.19/memflow-source-only.dkms.tar.gz
+sudo dkms install --archive=memflow-source-only.dkms.tar.gz
+```
+
+- Edit `/etc/default/grub`, add **ibt=off**:
+```shell
+GRUB_CMDLINE_LINUX="ibt=off ..."
+```
+
+- Update GRUB and restart Linux PC:
+```shell
+<Fedora> sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+<Debian> sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+- Run:
+```shell
+sudo modprobe memflow
+cd path/to/extracted/repository
+sudo -E ./nika
+```
+
+### 7.3. Spoof EDID
+
+- Pinnacle of HWID ban (EAC case).
+
+| Ban # | Public IP | Router MAC | Monitor 1 | Monitor 2 |
+| ----- | --------- | ---------- | --------- | --------- |
+| 1     | Flagged   | Flagged    | Flagged   |           |
+| 2     | Flagged   | Flagged    | Banned    |           |
+| 3     | Flagged   | Flagged    |           | Flagged   |
+| 4     | Flagged   | Banned     |           | Banned    |
+
+- Download EDWriter from: [`EDWriter thread`](https://www.monitortests.com/forum/Thread-EDID-DisplayID-Writer).
+
+- EDWriter >> Read EDID >> Save file... >> `edidfile.bin` >> [Save]
+
+- Download `edidpatch.cmd` to EDWriter folder (on Windows VM).
+
+- Run:
+```shell
+edidpatch.cmd edidfile.bin
+```
+
+- Write modified EDID to Dummy/Passthrough.
+
+| Capture Card               | Dummy/Passthrough |
+| -------------------------- | ----------------- |
+| Game Capture HD60 S+       | [`Fueran HDMI-2K-2P`](https://www.amazon.com/dp/B074P1K5W2/) (NA) |
+| Game Capture HD60 X        | [`Fueran HDMI-2K-2P`](https://www.amazon.de/dp/B087R3NXC6/) (EU) |
+| Game Capture 4K60 Pro      | [`Fueran HDMI-2K-4K`](https://www.amazon.com/dp/B0FL93Y452/) (NA) |
+| Game Capture 4K60 Pro MK.2 | [`Fueran HDMI-2K-4K`](https://www.amazon.de/dp/B0FZDCCNRJ/) (EU) |
+| Game Capture 4K60 S+       |                   |
+| Game Capture 4K X          |                   |
+| Game Capture 4K Pro        |                   |
+
+### 7.4. Spoof GPU (tested from 51x to 58x)
+
+- Disable ROM BAR for each PCI Host Device:
+  - Virtual Machine Manager >> [Open] >> View >> Details >> PCI 0000:xx:xx.x >> ROM BAR: [ ] _uncheck_ >> [Apply]
+
+- Check old UUID with `nvidia-smi -L`.
+- Run the cheat BEFORE the game at least once.
+- Check new UUID with `nvidia-smi -L`.
+
+### 8. Spoof network
+
+- This step is a journey on it's own. Initially you should skip it, but return later when you feel prepared.
+
+- You should set another router between your machine and your ISP router.
+
+- Most routers allow you to change (clone) WAN and WLAN network identifier (MAC address), yet what you need to periodically change is LAN network identifier, because that is what will be in your ARP table (arp -a) and what is collected for identification.
+
+- Educate yourself about [DD-WRT](https://dd-wrt.com/) or [OpenWRT](https://openwrt.org/), and then shop locally for a compatible router:
+  - **Shop locally** as you will be looking at the product tag for **brand**, **model**, and specially **version**.
+  - Updating will be as simple as selecting **factory-to-ddwrt.bin** file in your router update page, for that specific brand+model+version.
+
+- For DD-WRT go to: Administration >> Management >> Remote Access >> Telnet Management >> _check_ [x] Enable >> [Save] >> [Reboot Router]
+
+- Telnet to your router, authenticate and enter:
+```shell
+nvram set lan_hwaddr=XX:XX:XX:XX:XX:XX (set LAN new MAC address)
+nvram get lan_hwaddr
+nvram commit
+reboot
+```
+
+- For DD-WRT go to: Setup >> MAC Address Clone >> _check_ [x] Enable >> [Save]
+  - Clone WAN MAC (set WAN new MAC address)
+  - Clone Wireless MAC (set Wireless new MAC address)
+  - [Save]
+
+- For DD-WRT go to: Administration >> Management >> [Reboot Router]
